@@ -38,26 +38,31 @@ jobs:
         name: production-build
         path: dist/
 
-    - name: Read and bump version
+    - name: Read and bump version from package.json
       id: bump-version
       run: |
-        version=$(cat VERSION)
+        version=$(node -p "require('./package.json').version")
         echo "Current version: $version"
-        major=$(echo $version | cut -d. -f1 | tr -d v)
+        
+        # Increment patch version (you can change this logic to handle minor/major if required)
+        major=$(echo $version | cut -d. -f1)
         minor=$(echo $version | cut -d. -f2)
         patch=$(echo $version | cut -d. -f3)
-
+        
         new_patch=$((patch + 1))
-        new_version="v$major.$minor.$new_patch"
+        new_version="$major.$minor.$new_patch"
 
-        echo "$new_version" > VERSION
+        # Update package.json with the new version
+        jq --arg version "$new_version" '.version = $version' package.json > temp.json && mv temp.json package.json
+        
         echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
         echo "New version: $new_version"
 
-    - name: Commit and push new VERSION file
+    - name: Commit and push new version in package.json
       run: |
         git config user.name "Electrify-Services"
         git config user.email "software.development@electrifyservices.com"
+        git add package.json
         git commit -am "chore: bump version to $NEW_VERSION"
         git tag $NEW_VERSION
         git push origin main --tags
