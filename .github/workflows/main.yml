@@ -28,8 +28,12 @@ jobs:
       run: npx vitest run
     # - run: npm run build --if-present
     - name: Build app
-      run: npm run build --if-present
-
+      run: npm run build
+      
+    - name: Copy build to root folder
+      run: |
+        mkdir -p build-artifacts
+        cp -r dist/* build-artifacts/
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
